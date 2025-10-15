@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KL Vault</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #2a003f, #0a0012);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .wrapper {
+      width: 1200px;
+      max-width: 100%;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: #b276ff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      border-bottom: 2px solid #b276ff;
+    }
+
+    nav {
+      background: transparent;
+      padding: 15px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* 🔍 New search bar styling */
+    .search-container {
+      position: relative;
+      width: 320px;
+    }
+
+    input[type="search"] {
+      width: 100%;
+      height: 45px;
+      border-radius: 22.5px;
+      border: none;
+      padding: 0 50px 0 20px;
+      font-size: 16px;
+      color: #444;
+      outline: none;
+      box-shadow:
+        inset 2px 2px 5px #ffffff88,
+        inset -2px -2px 5px #c7c7c7a0;
+      background-color: #ffffff;
+      transition: border-radius 0.3s ease;
+    }
+
+    .btn-search {
+      position: absolute;
+      top: 50%;
+      right: 5px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(to bottom, #A020F0, #4B0082);
+      box-shadow: 0 6px 12px rgba(160, 32, 240, 0.6);
+      cursor: pointer;
+      color: white;
+      font-size: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      outline: none;
+      transform: translateY(-50%);
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .btn-search svg {
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      fill: white;
+    }
+
+    .btn-search span {
+      position: absolute;
+      right: 15px;
+      opacity: 0;
+      pointer-events: none;
+      user-select: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .search-container:hover input[type="search"] {
+      border-radius: 22.5px 45px 45px 22.5px;
+    }
+
+    .search-container:hover .btn-search {
+      width: 110px;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 600;
+      background: linear-gradient(to bottom, #8A2BE2, #4B0082);
+    }
+
+    .search-container:hover .btn-search svg.magnifier {
+      opacity: 0;
+    }
+
+    .search-container:hover .btn-search span {
+      opacity: 1;
+    }
+
+    .btn-search:not(:hover) span {
+      display: none;
+    }
+
+    main {
+      padding: 40px 20px;
+      display: grid;
+      gap: 30px;
+      grid-template-columns: 1fr;
+      justify-content: center;
+    }
+
+    @media(min-width: 600px) {
+      main {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media(min-width: 900px) {
+      main {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border: 2px solid transparent;
+    }
+
+    .card:hover {
+      border-color: #b276ff;
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 0 30px rgba(164, 76, 255, 0.6);
+    }
+
+    .card img {
+      width: 100px;
+      height: 100px;
+      border-radius: 15px;
+      object-fit: cover;
+      float: left;
+      margin-right: 20px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 16px;
+      font-family: "Georgia", serif;
+      color: #836aa3;
+      line-height: 1.2;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      display: -webkit-box;
+      overflow: hidden;
+    }
+
+    .card p {
+      margin: 5px 0 0;
+      font-family: "Georgia", serif;
+      color: #fff;
+    }
+
+    .clear {
+      clear: both;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .modal-content {
+      background: #1e1e2f;
+      color: white;
+      padding: 25px;
+      border-radius: 15px;
+      width: 70%;
+      max-height: 80%;
+      overflow-y: auto;
+      box-shadow: 0 0 30px rgba(164, 76, 255, 0.6);
+      position: relative;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #b276ff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .container{
+        display: grid;
+        grid-row: 100%;
+        grid-column: 33% 33% 33%;
+    }
+    
+    .left{
+         border: 2px solid rgba(164, 76, 255, 0.6);
+        grid-column: 1/2;
+        grid-row: 1/4;
+        border-radius: 25px;
+        color: #836aa3;
+
+    }
+    .middle{
+         border: 2px solid rgba(164, 76, 255, 0.6);
+          grid-column: 2/3;
+        grid-row: 1/4;
+        border-radius: 25px;
+        color: #836aa3;
+    }
+    .right{
+         border: 2px solid rgba(164, 76, 255, 0.6) ;
+          grid-column: 3/4;
+        grid-row: 1/4;
+        border-radius: 25px;
+        color: #836aa3;
+    }
+    .adjuster{
+        color: #836aa3;
+        margin-left: 40px;
+    }
+    .cards{
+        display: grid;
+        grid-column: 100%;
+        grid-row: 33% 33% 34%;
+        background: linear-gradient(to bottom, #A020F0, #4B0082);
+    }
+    .card1{
+         grid-column: 1/2;
+        grid-row: 1/4;
+        margin: 20px;
+    }
+    .card2{
+         grid-column: 2/3;
+        grid-row: 1/4;
+         margin: 20px;
+    }
+    .card3{
+         grid-column: 3/4;
+        grid-row: 1/4;
+         margin: 20px;
+    }
+    .link{
+        color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>KL Vault</header>
+
+    <!-- 🔍 New Search Bar -->
+    <nav>
+      <div class="search-container" role="search">
+        <input type="search" aria-label="Search" placeholder="Search..." />
+        <button class="btn-search" aria-label="Submit search">
+          <svg class="magnifier" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M21.53 20.47l-4.84-4.84a7.5 7.5 0 1 0-1.06 1.06l4.84 4.84a.75.75 0 0 0 1.06-1.06zM10.5 16.5a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/>
+          </svg>
+          <span>Search</span>
+        </button>
+      </div>
+    </nav>
+
+    <main>
+      <!-- your cards -->
+       <!-- Cards -->
+      <div class="card" onclick="showPopup('s1')"><img src="CTSD.png"><h3>COMPUTATIONAL THINKING FOR STRUCTURED DESIGN</h3><p>23SC1101</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s2')"><img src="DM.jpg"><h3>DISCRETE MATHEMATICS</h3><p>24MT1002</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s3')"><img src="FIS.jpg"><h3>FUNDAMENTALS OF IOT AND SENSORS</h3><p>24EC1101</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s4')"><img src="HV.jpg"><h3>HUMAN VALUES, GENDER EQUALITY AND PROFESSIONAL ETHICS</h3><p>23UC0026</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s5')"><img src="BEEC.jpg"><h3>BASIC ELECTRICAL AND ELECTRONIC CIRCUITS</h3><p>23EC1203</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s6')"><img src="DDCA.jpg"><h3>DIGITAL DESIGN AND COMPUTER ARCHITECTURE</h3><p>23EC1202</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s7')"><img src="LACE.jpg"><h3>LINEAR ALGEBRA & CALCULUS FOR ENGINEERS</h3><p>23MT1001</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s8')"><img src="DS.png"><h3>DATA STRUCTURES</h3><p>24SC1203</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s9')"><img src="DBMS.png"><h3>DATABASE MANAGEMENT SYSTEMS</h3><p>24AD2103</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s10')"><img src="oops.jpg"><h3>OBJECT ORIENTED PROGRAMMING</h3><p>24SC2006</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s11')"><img src="daa.jpg"><h3>DESIGN AND ANALYSIS OF ALGORITHMS</h3><p>24CS2203</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s12')"><img src="CN.png"><h3>COMPUTER NETWORKS</h3><p>24CS2202</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s13')"><img src="AIML.jpg"><h3>ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING</h3><p>24AD2001</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s14')"><img src="OS.jpg"><h3>OPERATING SYSTEMS</h3><p>24CS2101</p><div class="clear"></div></div>
+      <div class="card" onclick="showPopup('s15')"><img src="MO.jpg"><h3>MATHEMATICAL OPTIMIZATION</h3><p>24MT2012</p><div class="clear"></div></div>
+    </main>
+    <div id="popup" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <div id="popupBody"></div>
+      </div>
+    </div>
+
+<style>
+    .link {
+    text-decoration: none;
+    color: #fff;
+}
+
+.link:hover {
+    text-decoration: none;
+    color: #b276ff; /* optional hover effect */
+}
+</style>
+
+ <!-- INSIDE CARDS -->
+    <!-- Hidden Syllabus -->
+
+
+    <div id="s1" style="display:none;"><h2>23SC1101</h2>
+    <p>
+        <div class="container">
+        <h1>COMPUTATIONAL THINKING FOR STRUCTURED DESIGN</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">CTSD SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">CTSD SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">CTSD END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>PPT's</h3>
+            <a class="link" href="#">Co1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Co2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Co3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Co4: Differential Calculus  <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Study Notes And Other Resources</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">CTSD Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s2" style="display:none;"><h2>24MT1002</h2>
+    <p>
+        <div class="container">
+        <h1>DISCRETE MATHEMATICS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="DM SEM IN 1.pdf">DM SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="DM SEM IN 2.pdf">DM SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="DM END SEM.pdf">DM END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>PPT's</h3>
+            <a class="link" href="#">Co1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Co2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Co3: Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Co4: Differential Calculus  <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Study Notes And Other Resources</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#"></a>Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>  
+    </p></div>
+
+
+    <div id="s3" style="display:none;"><h2>24EC1101</h2>
+    <p>
+         <div class="container">
+        <h1>FUNDAMENTALS OF IOT AND SENSORS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">FIS SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">FIS SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="FIS END SEM.pdf">FIS END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s4" style="display:none;"><h2>23UC0026</h2>
+    <p>
+         <div class="container">
+        <h1>HUMAN VALUES, GENDER EQUALITY AND PROFESSIONAL ETHICS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="HV SEM IN 1.pdf">HV SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="HV SEM IN 2.pdf">HV SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="HV END SEM.pdf">HV END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s5" style="display:none;"><h2>23EC1203</h2>
+    <p>
+        <div class="container">
+        <h1>BASIC ELECTRICAL AND ELECTRONIC CIRCUITS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">BEEC SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">BEEC SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">BEEC END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s6" style="display:none;"><h2>23EC1202</h2>
+    <p>
+         <div class="container">
+        <h1>DIGITAL DESIGN AND COMPUTER ARCHITECTURE</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">DDCA SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">DDCA SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">DDCA END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Asympototic Notations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Greedy Programming<span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Dynamic Programming<span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Branch and Bound <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s7" style="display:none;"><h2>23MT1001</h2>
+    <p>
+         <div class="container">
+        <h1>LINEAR ALGEBRA & CALCULUS FOR ENGINEERS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">LACE SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">LACE SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="LACE END SEM.pdf">LACE END SEM<span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s8" style="display:none;"><h2>24SC1203</h2>
+    <p>
+         <div class="container">
+        <h1>DATA STRUCTURES</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">DS SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">DS SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">DS END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 5: Sequence And Series <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s9" style="display:none;"><h2>24AD2103</h2>
+    <p>
+         <div class="container">
+        <h1>DATABASE MANAGEMENT SYSTEMS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">DBMS SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">DBMS SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="DBMS END SEM .pdf">DBMS END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s10" style="display:none;"><h2>24SC2006</h2>
+    <p>
+         <div class="container">
+        <h1>OBJECT ORIENTED PROGRAMMING</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">OOPS SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">OOPS SEM IN 2<span>🔗</span></a><br>
+            <a class="link" href="#">OOPS END SEM<span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s11" style="display:none;"><h2>24CS2203</h2>
+    <p> 
+         <div class="container">
+        <h1>DESIGN AND ANALYSIS OF ALGORITHMS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">DAA SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">DAA SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">DAA END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s12" style="display:none;"><h2>24CS2202</h2>
+    <p> 
+         <div class="container">
+        <h1>COMPUTER NETWORKS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">CN SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">CN SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">CN END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s13" style="display:none;"><h2>24AD2001</h2>
+    <p>
+        <div class="container">
+        <h1>ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">AIML SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">AIML SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">AIML END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>   
+    </p></div>
+
+
+    <div id="s14" style="display:none;"><h2>24CS2101</h2>
+    <p> 
+         <div class="container">
+        <h1>OPERATING SYSTEMS</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">OS SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">OS SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">OS END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+    <div id="s15" style="display:none;"><h2>24MT2012</h2>
+    <p> 
+        <div class="container">
+        <h1>MATHEMATICAL OPTIMIZATION</h1>
+        <a href="#" style="color: #fff;">📄 View Syllabus</a>
+       <div class="cards">
+        <!-- Previous Year Questions -->
+        <div class="card1 card">
+            <h3>Previous Year Questions</h3>
+            <a class="link" href="#">MO SEM IN 1 <span>🔗</span></a><br>
+            <a class="link" href="#">MO SEM IN 2 <span>🔗</span></a><br>
+            <a class="link" href="#">MO END SEM <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Study Notes -->
+        <div class="card2 card">
+            <h3>Study Notes And Other Resources</h3>
+            <a class="link" href="#">Chapter 1: Matrices <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 2: Functions Of Several Variables <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 3: Ordinary Differential Equations <span>🔗</span></a><br>
+            <a class="link" href="#">Chapter 4: Differential Calculus And Beta Gamma Functions <span>🔗</span></a><br>
+        </div>
+        <br>
+        <!-- Exam Strategies -->
+        <div class="card3 card">
+            <h3>Exam Strategies And General Suggestions</h3>
+            <p style="font-size: 0.8em; color: #ccc;">
+                Note: These are just suggestions collectively shared by many students; follow at your own risk!
+            </p><br>
+            <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+            <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+        </div>
+        <br>
+    </div>
+    </p></div>
+
+
+<div id="s16" style="display:none;"><h2>Course 1 Syllabus</h2>
+    <p>
+        <div class="container">
+            <h1>JAPANESE LANGUAGE</h1>
+            <a href="#" style="color: #fff; text-decoration: none;">📄 View Syllabus</a>
+            <div class="cards">
+                <!-- Previous Year Questions -->
+                <div class="card1 card">
+                    <h3>Previous Year Questions</h3>
+                    <a class="link" href="#">JAPANESE SEM IN 1 <span>🔗</span></a><br>
+                    <a class="link" href="#">JAPANESE SEM IN 2 <span>🔗</span></a><br>
+                    <a class="link" href="#">JAPANESE END SEM <span>🔗</span></a><br>
+                </div>
+                <br>
+                <!-- Study Notes -->
+                <div class="card2 card">
+                    <h3>PPT's</h3>
+                    <a class="link" href="#">Co1: Matrices <span>🔗</span></a><br>
+                    <a class="link" href="#">C02: Functions Of Several Variables <span>🔗</span></a><br>
+                    <a class="link" href="#">C03: Ordinary Differential Equations <span>🔗</span></a><br>
+                    <a class="link" href="#">Co4: Differential Calculus <span>🔗</span></a><br>
+                </div>
+                <br>
+                <!-- Exam Strategies -->
+                <div class="card3 card">
+                    <h3>Study Notes And Other Resources</h3>
+                    <p style="font-size: 0.8em; color: #ccc;">
+                        Note: These are just suggestions collectively shared by many students; follow at your own risk!
+                    </p><br>
+                    <a class="link" href="#">Maths Semester Exam Strategies <span>🔗</span></a><br>
+                    <a class="link" href="#">Sem Exams General Rules <span>🔗</span></a><br>
+                </div>
+                <br>
+            </div>
+        </div>
+    </p>
+</div>
+
+    <script>
+    function showPopup(id) {
+      document.getElementById("popupBody").innerHTML = document.getElementById(id).innerHTML;
+      document.getElementById("popup").style.display = "flex";
+    }
+
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+    }
+  </script>
+</body>
+</html>
